@@ -1,0 +1,20 @@
+# Taller B4-T1 - Diseño de Redes Confiables (Justicia e Incertidumbre)
+# Entorno verificado con Python 3.10
+
+# Núcleo de datos / ML clásico
+numpy==2.2.6
+pandas==2.3.3
+scikit-learn==1.7.2
+scipy==1.15.3
+matplotlib==3.10.9
+
+# Deep Learning (Keras 3 sobre TensorFlow) + AutoML
+tensorflow==2.21.0
+keras==3.12.2
+keras-tuner==1.4.8
+tensorboard==2.20.0   # requerido por keras-tuner (engine de trials)
+
+# Ejecución de notebooks (Run All / nbconvert)
+nbformat==5.10.4
+nbconvert==7.17.1
+ipykernel==7.3.0
