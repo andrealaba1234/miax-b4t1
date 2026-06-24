@@ -58,6 +58,20 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Preparación automática en Windows
+
+También puedes dejar el entorno listo con un único comando de PowerShell:
+
+```powershell
+.\scripts\setup_env.ps1
+```
+
+Este script:
+- crea o reutiliza `.venv`
+- instala `requirements.txt`
+- descomprime `data\application_train.zip` si falta el CSV
+- registra el kernel `Python (miax-b4t1)` para VS Code/Jupyter
+
 Dependencias clave: `tensorflow==2.21.0`, `keras==3.12.2` (Keras 3),
 `keras-tuner==1.4.8`, `tensorboard` (lo requiere keras-tuner), `scikit-learn`,
 `scipy`, `pandas`, `numpy`, `matplotlib`.

@@ -18,3 +18,4 @@ tensorboard==2.20.0   # requerido por keras-tuner (engine de trials)
 nbformat==5.10.4
 nbconvert==7.17.1
 ipykernel==7.3.0
+notebook>=7,<8
