@@ -169,8 +169,71 @@ class RatioEndeudamientoLayer(keras.layers.Layer):
 
 
 # ===========================================================================
-# 3. Constructor del modelo base (arquitectura compartida Base/FAIR)
+# 3. Constructores de modelos (arquitectura compartida Base/FAIR)
 # ===========================================================================
+def build_model_from_config(
+    input_dim,
+    hidden_units,
+    dropouts=None,
+    activation="relu",
+    use_custom_layer=True,
+    output_activation="sigmoid",
+    output_name="pd",
+    name="credit_model",
+):
+    """Construye (sin compilar) un MLP con capa customizada y topología variable.
+
+    Parámetros
+    ----------
+    input_dim : int
+        Número de features de entrada.
+    hidden_units : list[int] | tuple[int, ...]
+        Unidades de cada capa densa oculta.
+    dropouts : list[float] | tuple[float, ...] | None
+        Dropout aplicado tras cada capa oculta. Si es `None`, se usa 0.0
+        en todas. Si se pasa un escalar, se replica para todas las capas.
+    activation : str
+        Activación de las capas ocultas.
+    use_custom_layer : bool
+        Si `True`, inserta `RatioEndeudamientoLayer` justo tras la entrada.
+    output_activation : str
+        Activación de la capa de salida.
+    output_name : str
+        Nombre de la capa de salida.
+    name : str
+        Nombre del modelo Keras.
+    """
+    if isinstance(hidden_units, int):
+        hidden_units = [hidden_units]
+    hidden_units = list(hidden_units)
+    if len(hidden_units) == 0:
+        raise ValueError("hidden_units debe contener al menos una capa oculta.")
+
+    if dropouts is None:
+        dropouts = [0.0] * len(hidden_units)
+    elif isinstance(dropouts, (int, float)):
+        dropouts = [float(dropouts)] * len(hidden_units)
+    else:
+        dropouts = list(dropouts)
+
+    if len(dropouts) != len(hidden_units):
+        raise ValueError("dropouts debe tener la misma longitud que hidden_units.")
+
+    inputs = keras.Input(shape=(input_dim,), name="features")
+    x = inputs
+    if use_custom_layer:
+        x = RatioEndeudamientoLayer(name="ratio_endeudamiento")(x)
+
+    for i, (units, dropout) in enumerate(zip(hidden_units, dropouts), start=1):
+        x = keras.layers.Dense(units, activation=activation, name=f"dense_{i}")(x)
+        x = keras.layers.Dropout(dropout, name=f"dropout_{i}")(x)
+
+    outputs = keras.layers.Dense(
+        1, activation=output_activation, name=output_name
+    )(x)
+    return keras.Model(inputs, outputs, name=name)
+
+
 def build_model(input_dim, units1=64, units2=32, dropout=0.2,
                 use_custom_layer=True):
     """Construye (sin compilar) el modelo base + capa customizada.
@@ -186,16 +249,16 @@ def build_model(input_dim, units1=64, units2=32, dropout=0.2,
     el 01 con BCE estándar y el 02 con la FAIR loss. Así la arquitectura es
     idéntica y la comparación es justa.
     """
-    inputs = keras.Input(shape=(input_dim,), name="features")
-    x = inputs
-    if use_custom_layer:
-        x = RatioEndeudamientoLayer(name="ratio_endeudamiento")(x)
-    x = keras.layers.Dense(units1, activation="relu")(x)
-    x = keras.layers.Dropout(dropout)(x)
-    x = keras.layers.Dense(units2, activation="relu")(x)
-    x = keras.layers.Dropout(dropout)(x)
-    outputs = keras.layers.Dense(1, activation="sigmoid", name="pd")(x)
-    return keras.Model(inputs, outputs, name="credit_model")
+    return build_model_from_config(
+        input_dim=input_dim,
+        hidden_units=[units1, units2],
+        dropouts=[dropout, dropout],
+        activation="relu",
+        use_custom_layer=use_custom_layer,
+        output_activation="sigmoid",
+        output_name="pd",
+        name="credit_model",
+    )
 
 
 def compute_class_weight_balanced(y):
